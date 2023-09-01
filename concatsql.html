@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Update</title>
+    <meta charset="utf-8">
+</head>
+
+<body>
+    <div>
+        <a style="font-size: large;color: blueviolet;">sql刷数据拼接工具</a>
+        <br />
+        <br />
+        <a style="color: blueviolet;">源数据</a>
+        <br />
+        <a style="font-size: 1px;color: gray;">说明：多列数据空格分开</a>
+        <textarea style="width: 100%;height: 300px;" id="sourcetxt">
+        </textarea>
+
+        <br />
+        <br />
+        <a style="color: blueviolet;">sql模板</a>
+        <br />
+        <a style="font-size: 1px;color: gray;">说明：%1表示取源数据第1列，%2表示取第2列，以此类推，%1(0,2)表示截取第1列的前两个字符，%2(0,1)表示截取第2列的第1个字符</a>
+        <textarea style="width: 100%;height: 100px;" id="sql">
+update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and id_no=%3%;
+        </textarea>
+
+        <br />
+        <br />
+        <button style="color:cornflowerblue;" id="generateButton">生成</button>
+        <br />
+        <br />
+        <a style="color: blueviolet;">目标脚本</a>
+        <textarea style="width: 100%;height: 900px;" id="result"></textarea>
+        <br />
+        <br />
+        <br />
+        <br />
+    </div>
+
+
+    <script>
+        document.getElementById("sourcetxt").value = `17535102440	13170436530	60004031224634
+13623638706	13113821291	60004030895617
+13734218677	23101134791	60004029973732
+13593041622	23130422157	60004029514251
+`;
+        document.getElementById("sql").value = `update ur_test_info_%1(0,2)% set aaaa = '%1%' where bbb =%2% and ccc=%3%;`;
+        var generateButton = document.getElementById("generateButton");
+        generateButton.addEventListener('click', function () {
+            let source = document.getElementById("sourcetxt").value;
+            let sql = document.getElementById("sql").value;
+            if (sql.indexOf(";") == -1) {
+                alert("sql语句没有;号");
+                return;
+            }
+            //;后边不能再有字符
+            if (sql.indexOf(";") != sql.length - 1) {
+                alert("sql语句;号后边不能再有字符，如有空格或其他字符请去除");
+                return;
+            }
+            let result = [];
+            let sourcean = source.split("\n");
+            for (let i = 0; i < sourcean.length; i++) {
+                let lineindex = i + 1;
+                let linestr = sourcean[i];
+                if (linestr == "") {
+                    continue;
+                }
+                let linearray = linestr.split(/\s+/);
+                let reg = '';
+                var regex = /%([^%]+)%/g;
+                var matches = [];
+                var match;
+                while ((match = regex.exec(sql)) !== null) {
+                    matches.push(match[0]);
+                }
+
+                let sqltest = sql;
+                for (let j = 0; j < matches.length; j++) {
+                    let matchstr = matches[j];
+                    let index = 0;
+                    if (matchstr.indexOf("(") != -1) {
+                        //1(0,2)
+                        matchstr = matchstr.replace(/%/g, "");
+                        let begin = 0;
+                        let end = 0;
+                        let beginleft = matchstr.indexOf("(");
+                        let beginright = matchstr.indexOf(")");
+                        let begind = matchstr.indexOf(",");
+                        index = matchstr.substring(0, beginleft);
+                        begin = matchstr.substring(beginleft + 1, begind);
+                        end = matchstr.substring(begind + 1, beginright);
+                        if (begin > end) {
+                            alert("截取的字符" + matchstr + "的结束位置大于开始位置");
+                            return;
+                        }
+                        if (end == begin) {
+                            alert("截取的字符" + matchstr + "的结束位置等于开始位置");
+                            return;
+                        }
+                        if (end > linearray[index].length) {
+                            alert("截取的字符" + matchstr + "的结束位置大于源数据的长度");
+                            return;
+                        }
+                        let replace = linearray[index-1].substring(begin, end);
+                        console.log(replace);
+                        sqltest = sqltest.replace(matches[j], replace);
+                    } else {
+                        index = matchstr.replace(/%/g, "");
+                        let replace = linearray[index-1];
+                        sqltest = sqltest.replace(matchstr, replace);
+                    }
+                }
+                result.push(sqltest);
+                document.getElementById("result").value = result.join("\n");
+            }
+        })
+    </script>
+</body>
+
+</html>
