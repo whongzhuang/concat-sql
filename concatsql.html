@@ -4,11 +4,30 @@
 <head>
     <title>Update</title>
     <meta charset="utf-8">
+    <style>
+        #processingDialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
     <div>
+        <div id="processingDialog">
+            <p>处理中，请稍候...</p>
+        </div>
         <a style="font-size: large;color: blueviolet;">sql刷数据拼接工具</a>
+        <br />
+        <a style="font-size: 1px;color: gray;">将提出的源数据，匹配sql刷数据模板，生成刷数据脚本</a>
         <br />
         <br />
         <a style="color: blueviolet;">源数据</a>
@@ -21,7 +40,8 @@
         <br />
         <a style="color: blueviolet;">sql模板</a>
         <br />
-        <a style="font-size: 1px;color: gray;">说明：%1表示取源数据第1列，%2表示取第2列，以此类推，%1(0,2)表示截取第1列的前两个字符，%2(0,1)表示截取第2列的第1个字符</a>
+        <a
+            style="font-size: 1px;color: gray;">说明：%1表示取源数据第1列，%2表示取第2列，以此类推，%1(0,2)表示截取第1列的前两个字符，%2(0,1)表示截取第2列的第1个字符</a>
         <textarea style="width: 100%;height: 100px;" id="sql">
 update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and id_no=%3%;
         </textarea>
@@ -41,6 +61,11 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
 
 
     <script>
+        var processingDialog = document.getElementById("processingDialog");
+
+        var data = [];
+        var batchSize = 3000;
+        var currentIndex = 0;
         document.getElementById("sourcetxt").value = `17535102440	13170436530	60004031224634
 13623638706	13113821291	60004030895617
 13734218677	23101134791	60004029973732
@@ -49,22 +74,28 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
         document.getElementById("sql").value = `update ur_test_info_%1(0,2)% set aaaa = '%1%' where bbb =%2% and ccc=%3%;`;
         var generateButton = document.getElementById("generateButton");
         generateButton.addEventListener('click', function () {
+            processingDialog.style.display = "block";
             let source = document.getElementById("sourcetxt").value;
             let sql = document.getElementById("sql").value;
             if (sql.indexOf(";") == -1) {
                 alert("sql语句没有;号");
                 return;
             }
-            //;后边不能再有字符
             if (sql.indexOf(";") != sql.length - 1) {
                 alert("sql语句;号后边不能再有字符，如有空格或其他字符请去除");
                 return;
             }
             let result = [];
-            let sourcean = source.split("\n");
-            for (let i = 0; i < sourcean.length; i++) {
+            let sourcearray = source.split("\n");
+            processDataBatch(sourcearray, sql, result);
+        })
+        function processDataBatch(sourcearray, sql, result) {
+            console.log("开始处理数据，当前索引：" + sourcearray);
+            var endIndex = Math.min(currentIndex + batchSize, sourcearray.length);
+            for (var i = currentIndex; i < endIndex; i++) {
                 let lineindex = i + 1;
-                let linestr = sourcean[i];
+                let linestr = sourcearray[i];
+                console.log("第" + lineindex + "行数据：" + linestr);
                 if (linestr == "") {
                     continue;
                 }
@@ -104,19 +135,31 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
                             alert("截取的字符" + matchstr + "的结束位置大于源数据的长度");
                             return;
                         }
-                        let replace = linearray[index-1].substring(begin, end);
+                        let replace = linearray[index - 1].substring(begin, end);
                         console.log(replace);
                         sqltest = sqltest.replace(matches[j], replace);
                     } else {
                         index = matchstr.replace(/%/g, "");
-                        let replace = linearray[index-1];
+                        let replace = linearray[index - 1];
                         sqltest = sqltest.replace(matchstr, replace);
                     }
                 }
                 result.push(sqltest);
-                document.getElementById("result").value = result.join("\n");
             }
-        })
+
+            currentIndex = endIndex;
+
+            if (currentIndex < sourcearray.length) {
+                setTimeout(function () {
+                    processDataBatch(sourcearray, sql, result);
+                }, 0);
+            } else {
+                document.getElementById("result").value = result.join("\n");
+                processingDialog.style.display = "none";
+                console.log("数据处理完成");
+                currentIndex = 0;
+            }
+        }
     </script>
 </body>
 
