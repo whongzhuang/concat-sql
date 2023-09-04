@@ -25,7 +25,7 @@
         <div id="processingDialog">
             <p>处理中，请稍候...</p>
         </div>
-        <a style="font-size: large;color: blueviolet;">sql刷数据拼接工具</a>
+        <a style="font-size: x-large;color: blueviolet;">sql刷数据拼接工具</a>
         <br />
         <a style="font-size: 1px;color: gray;">将提出的源数据，匹配sql刷数据模板，生成刷数据脚本</a>
         <br />
@@ -41,7 +41,7 @@
         <a style="color: blueviolet;">sql模板</a>
         <br />
         <a
-            style="font-size: 1px;color: gray;">说明：%1%表示取源数据第1列，%2%表示取第2列，以此类推，%1(0,2)%表示截取第1列的前两个字符，%2(0,1)%表示截取第2列的第1个字符</a>
+            style="font-size: 1px;color: gray;">说明：%1%表示取源数据第1列，%2%表示取第2列，以此类推，%1(9,11)%表示截取第1列的后两个字符，%2(0,1)%表示截取第2列的第1个字符</a>
         <textarea style="width: 100%;height: 100px;" id="sql">
 update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and id_no=%3%;
         </textarea>
@@ -62,8 +62,9 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
 
     <script>
         var processingDialog = document.getElementById("processingDialog");
-
+        document.getElementById("result").value = '';
         var data = [];
+        //数据量大可能导致页面卡死，分批处理，使用定时器保持页面响应。
         var batchSize = 3000;
         var currentIndex = 0;
         document.getElementById("sourcetxt").value = `17535102440	13170436530	60004031224634
@@ -74,6 +75,7 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
         document.getElementById("sql").value = `update ur_test_info_%1(0,2)% set aaaa = '%1%' where bbb =%2% and ccc=%3%;`;
         var generateButton = document.getElementById("generateButton");
         generateButton.addEventListener('click', function () {
+            document.getElementById("result").value = '';
             processingDialog.style.display = "block";
             let source = document.getElementById("sourcetxt").value;
             let sql = document.getElementById("sql").value;
@@ -90,12 +92,10 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
             processDataBatch(sourcearray, sql, result);
         })
         function processDataBatch(sourcearray, sql, result) {
-            console.log("开始处理数据，当前索引：" + sourcearray);
             var endIndex = Math.min(currentIndex + batchSize, sourcearray.length);
             for (var i = currentIndex; i < endIndex; i++) {
                 let lineindex = i + 1;
                 let linestr = sourcearray[i];
-                console.log("第" + lineindex + "行数据：" + linestr);
                 if (linestr == "") {
                     continue;
                 }
@@ -113,7 +113,6 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
                     let matchstr = matches[j];
                     let index = 0;
                     if (matchstr.indexOf("(") != -1) {
-                        //1(0,2)
                         matchstr = matchstr.replace(/%/g, "");
                         let begin = 0;
                         let end = 0;
@@ -123,20 +122,7 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
                         index = matchstr.substring(0, beginleft);
                         begin = matchstr.substring(beginleft + 1, begind);
                         end = matchstr.substring(begind + 1, beginright);
-                        if (begin > end) {
-                            alert("截取的字符" + matchstr + "的结束位置大于开始位置");
-                            return;
-                        }
-                        if (end == begin) {
-                            alert("截取的字符" + matchstr + "的结束位置等于开始位置");
-                            return;
-                        }
-                        if (end > linearray[index].length) {
-                            alert("截取的字符" + matchstr + "的结束位置大于源数据的长度");
-                            return;
-                        }
                         let replace = linearray[index - 1].substring(begin, end);
-                        console.log(replace);
                         sqltest = sqltest.replace(matches[j], replace);
                     } else {
                         index = matchstr.replace(/%/g, "");
@@ -156,7 +142,6 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
             } else {
                 document.getElementById("result").value = result.join("\n");
                 processingDialog.style.display = "none";
-                console.log("数据处理完成");
                 currentIndex = 0;
             }
         }
