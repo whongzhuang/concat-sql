@@ -25,7 +25,7 @@
         <div id="processingDialog">
             <p>处理中，请稍候...</p>
         </div>
-        <a style="font-size: x-large;color: blueviolet;">sql刷数据拼接工具</a>
+        <a style="font-size: x-large;color: blueviolet;">sql刷数据拼接工具(使用chrome、edge)</a>
         <br />
         <a style="font-size: 1px;color: gray;">将提出的源数据，匹配sql刷数据模板，生成刷数据脚本</a>
         <br />
@@ -81,10 +81,12 @@ update ur_usergoods_info_%1(0,2)% set prc_id = '%1%' where goodsins_id =%2% and 
             let sql = document.getElementById("sql").value;
             if (sql.indexOf(";") == -1) {
                 alert("sql语句没有;号");
+                processingDialog.style.display = "none";
                 return;
             }
             if (sql.indexOf(";") != sql.length - 1) {
                 alert("sql语句;号后边不能再有字符，如有空格或其他字符请去除");
+                processingDialog.style.display = "none";
                 return;
             }
             let result = [];
