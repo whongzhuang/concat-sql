@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Update</title>
+    <meta charset="utf-8">
+</head>
+
+<body>
+    <a style="font-size: x-large;color: blueviolet;">根据列拼串</a>
+    <br />
+    <br />
+    <br />
+    <a style="color: blueviolet;">源数据</a>
+    <br />
+    <textarea style="width: 100%;height: 300px;" id="sourcetxt"></textarea>
+    <br />
+    <br />
+    <button style="color:cornflowerblue;" id="generateButton">生成</button>
+    <br />
+    <br />
+    <a style="color: blueviolet;">目标脚本</a>
+    <textarea style="width: 100%;height: 900px;" id="result"></textarea>
+
+    <script>
+        document.getElementById("sourcetxt").value = `60102186335170
+60102186027946
+60102185175789
+60102184748163
+60102189930523
+60102189982472
+60102176475889
+60102191056384
+60102182396209
+60102188345986
+60102179502040
+60102187239906
+60102188149183
+60102190081038
+60102187375659
+`;
+        var generateButton = document.getElementById("generateButton");
+        generateButton.addEventListener('click', function () {
+            var sourcetxt = document.getElementById("sourcetxt").value;
+            //把sourcetxt每一行，前边加个'后边加个',然后输出到result，最后一行不加,
+            var sourcelines = sourcetxt.split("\n");
+            var result = "";
+            for (var i = 0; i < sourcelines.length; i++) {
+                var sourceline = sourcelines[i];
+                if (sourceline.trim() == "") {
+                    continue;
+                }
+                result += "'" + sourceline + "',";
+            }
+            result = result.substring(0, result.length - 1);
+            document.getElementById("result").value = result;
+        });
+    </script>
+</body>
+
+</html>
